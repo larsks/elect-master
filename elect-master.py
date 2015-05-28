@@ -9,15 +9,22 @@ import socket
 
 default_etcd_server = 'http://localhost:4001'
 
+
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument('--server', '-s',
                    default=default_etcd_server)
+    p.add_argument('--address', '-a',
+                   help='Override automatic detection '
+                        'of client ip address',)
     p.add_argument('key')
     return p.parse_args()
 
 
 def get_my_ip(server):
+    '''Determine our local ip address by opening a socket to the remote
+    etcd server and then calling getpeername().'''
+
     url = urlparse.urlparse(server)
 
     try:
@@ -59,7 +66,10 @@ def main():
     if args.key.startswith('/'):
         args.key = args.key[1:]
 
-    myid = get_my_ip(args.server)
+    if args.address:
+        myid = args.address
+    else:
+        myid = get_my_ip(args.server)
 
     try:
         register_key(args.server, args.key, myid)
@@ -72,7 +82,5 @@ def main():
     print master
     sys.exit(retval)
 
-
 if __name__ == '__main__':
     main()
-
